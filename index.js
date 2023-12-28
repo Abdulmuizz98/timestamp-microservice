@@ -20,7 +20,11 @@ app.get("/", function (req, res) {
 
 const timeParser = (req, res, next) => {
   const { time } = req.params;
-  const parsedTime = /-/.test(time) ? new Date(time) : new Date(Number(time));
+  const parsedTime = /^\d{1,}$/.test(time)
+    ? new Date(Number(time))
+    : !time
+    ? new Date()
+    : new Date(time);
   req.parsedTime = parsedTime;
   next();
 };
@@ -30,7 +34,9 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.get("/api/:time", timeParser, (req, res) => {
+app.get("/api/:time?", timeParser, (req, res) => {
+  if (req.parsedTime.toUTCString() === "Invalid Date")
+    res.json({ error: "Invalid Date" });
   res.json({
     unix: req.parsedTime.getTime(),
     utc: req.parsedTime.toUTCString(),
